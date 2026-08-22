@@ -1,114 +1,129 @@
 # AI Resume Analyzer
 
-An AI-powered resume analysis tool that compares your resume against a job description and gives you an ATS score, match percentage, missing keywords, strengths, and improvement suggestions.
+> AI-powered resume-to-job matching with ATS scoring, keyword analysis, strengths, and actionable improvement suggestions.
 
-## Features
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5.2-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
 
-- Upload a PDF resume (drag & drop or click to browse)
-- Paste any job description
-- Get instant AI analysis powered by GPT-5:
-  - **ATS Score** — how well your resume passes Applicant Tracking Systems
-  - **Match Percentage** — how closely your resume aligns with the job
-  - **Missing Keywords** — important terms from the job description not in your resume
-  - **Strengths** — what your resume does well for this role
-  - **Improvements** — specific, actionable suggestions
+## Overview
+
+AI Resume Analyzer compares a PDF resume against a target job description and produces a structured analysis designed to help improve resume relevance.
+
+### Analysis output
+
+- **ATS score** — estimated resume compatibility
+- **Match percentage** — alignment with the job description
+- **Missing keywords** — important terms not represented in the resume
+- **Strengths** — areas that already align well
+- **Improvements** — actionable suggestions
+- **Summary** — concise overall assessment
+
+## Architecture
+
+```text
+PDF Resume + Job Description
+            ↓
+      Express API
+            ↓
+       PDF Parsing
+            ↓
+       OpenAI Analysis
+            ↓
+    Structured JSON Result
+            ↓
+       React Dashboard
+```
 
 ## Tech Stack
 
-- **Frontend**: React + Vite + TypeScript + Tailwind CSS (shadcn/ui)
-- **Backend**: Node.js + Express 5 + TypeScript
-- **PDF Parsing**: pdf-parse
-- **File Upload**: Multer
-- **AI**: OpenAI GPT-5.2
-- **Monorepo**: pnpm workspaces
+| Layer | Technology |
+|---|---|
+| Frontend | React • Vite • TypeScript • Tailwind CSS • shadcn/ui |
+| Backend | Node.js • Express 5 • TypeScript |
+| AI | OpenAI GPT-5.2 |
+| PDF processing | pdf-parse |
+| Uploads | Multer |
+| API contract | OpenAPI • Zod |
+| Workspace | pnpm monorepo |
 
 ## Project Structure
 
-```
-├── artifacts/
-│   ├── api-server/          # Express backend (POST /api/analyze)
-│   └── resume-analyzer/     # React frontend
-├── lib/
-│   ├── api-spec/            # OpenAPI spec (source of truth)
-│   ├── api-client-react/    # Generated React Query hooks
-│   ├── api-zod/             # Generated Zod schemas
-│   └── integrations-openai-ai-server/  # OpenAI client
-├── package.json
-└── pnpm-workspace.yaml
+```text
+artifacts/
+├── api-server/          # Express backend
+└── resume-analyzer/     # React frontend
+lib/
+├── api-spec/            # OpenAPI source of truth
+├── api-client-react/    # Generated React Query hooks
+├── api-zod/             # Generated validation schemas
+└── integrations-openai-ai-server/
+
+package.json
+pnpm-workspace.yaml
 ```
 
-## Setup
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm (`npm install -g pnpm`)
-- An OpenAI API key
+- pnpm
+- OpenAI API key
 
-### Installation
+### Install
 
 ```bash
 pnpm install
 ```
 
-### Environment Variables
-
-Create a `.env` file in `artifacts/api-server/`:
+Create `artifacts/api-server/.env`:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3001
 ```
 
-Then update `lib/integrations-openai-ai-server/src/client.ts`:
-
-```typescript
-import OpenAI from "openai";
-
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-```
-
-### Running Locally
+### Run
 
 ```bash
-# Start the API server (in one terminal)
 pnpm --filter @workspace/api-server run dev
+```
 
-# Start the frontend (in another terminal)
+In another terminal:
+
+```bash
 pnpm --filter @workspace/resume-analyzer run dev
 ```
 
-Frontend: `http://localhost:5173`
+Frontend: `http://localhost:5173`  
 API: `http://localhost:3001`
 
 ## API
 
-### POST /api/analyze
+`POST /api/analyze`
 
 Accepts multipart form data:
-- `resume` — PDF file (max 10MB)
-- `jobDescription` — job description text
 
-Returns JSON:
+- `resume` — PDF resume
+- `jobDescription` — target job description
 
-```json
-{
-  "atsScore": 78,
-  "matchPercentage": 65,
-  "missingKeywords": ["React", "TypeScript", "CI/CD"],
-  "strengths": [
-    "Strong backend experience with Node.js",
-    "Demonstrated leadership in project delivery"
-  ],
-  "improvements": [
-    "Add quantified achievements to work history",
-    "Include missing keywords naturally in your skills section"
-  ],
-  "summary": "Your resume is well-structured but missing several key terms..."
-}
-```
+Returns a structured analysis containing ATS score, match percentage, missing keywords, strengths, improvements, and summary.
+
+## Security & Privacy
+
+- Keep API keys in environment variables.
+- Never commit `.env` files or credentials.
+- Treat uploaded resumes as sensitive documents.
+- Use appropriate access controls and secure storage when deploying publicly.
+
+## Author
+
+**Pankaj (Tony) Kumar**  
+AI Engineer • Full Stack Developer • Generative AI & RAG Specialist
+
+[GitHub](https://github.com/hack2ai) • [LinkedIn](https://www.linkedin.com/in/pankaj-kumar-ab591a216)
 
 ## License
 
