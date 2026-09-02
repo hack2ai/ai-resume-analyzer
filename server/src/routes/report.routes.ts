@@ -1,0 +1,38 @@
+import { Router } from "express";
+import PDFDocument from "pdfkit";
+import { prisma } from "../lib/prisma.js";
+import { requireAuth, type AuthenticatedRequest } from "../middleware/auth.js";
+
+const router = Router();
+
+router.get("/:analysisId.pdf", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const analysisId = Array.isArray(req.params.analysisId) ? req.params.analysisId[0] : req.params.analysisId;
+  if (!analysisId) return res.status(400).json({ error: "Invalid analysis ID." });
+  const analysis = await prisma.resumeAnalysis.findFirst({ where: { id: analysisId, userId: req.user!.id } });
+  if (!analysis) return res.status(404).json({ error: "Analysis not found." });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="resumeiq-analysis-${analysis.id}.pdf"`);
+  const doc = new PDFDocument({ margin: 48 });
+  doc.pipe(res);
+  doc.fontSize(24).text("ResumeIQ AI", { align: "center" });
+  doc.fontSize(12).fillColor("#64748b").text("Professional Resume Analysis Report", { align: "center" });
+  doc.moveDown();
+  doc.fillColor("#0f172a").fontSize(18).text(analysis.jobTitle || "Resume Analysis");
+  doc.fontSize(11).text(`Resume: ${analysis.resumeFileName}`);
+  doc.text(`Generated: ${analysis.createdAt.toLocaleDateString()}`);
+  doc.moveDown();
+  doc.fontSize(22).text(`ATS Score: ${analysis.atsScore}%`);
+  doc.fontSize(22).text(`Job Match: ${analysis.matchPercentage}%`);
+  doc.moveDown();
+  doc.fontSize(15).text("Executive Summary");
+  doc.fontSize(11).text(analysis.summary, { lineGap: 4 });
+  const section = (title: string, items: string[]) => { doc.moveDown(); doc.fontSize(15).text(title); doc.fontSize(11); items.forEach((item) => doc.text(`• ${item}`, { indent: 12, lineGap: 3 })); };
+  section("Strengths", analysis.strengths);
+  section("Missing Keywords", analysis.missingKeywords);
+  section("Priority Improvements", analysis.improvements);
+  doc.moveDown();
+  doc.fontSize(9).fillColor("#64748b").text("Scores are AI-generated estimates and are not hiring decisions.", { align: "center" });
+  doc.end();
+});
+
+export default router;
