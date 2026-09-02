@@ -1,194 +1,211 @@
-# AI Resume Analyzer
+# ResumeIQ AI
 
-> AI-powered resume-to-job matching that turns a resume and job description into structured ATS-style insights, keyword gaps, strengths, and actionable improvement suggestions.
+> A full-stack AI career intelligence platform that analyzes resumes against job descriptions, estimates ATS compatibility, identifies skill gaps, improves resume content, stores user history, and generates professional PDF reports.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5.2-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
-[![License](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
+## Highlights
 
-## Why This Project?
-
-Recruiters and ATS platforms evaluate resumes against job-specific requirements. This project helps candidates understand that alignment by combining document parsing, structured API validation, and LLM-assisted analysis in a full-stack application.
-
-> **Important:** ATS and match scores are estimates, not hiring decisions. Results should be treated as guidance rather than a guarantee of interview selection.
-
-## Features
-
-- PDF resume upload and parsing
-- Job-description analysis
-- ATS-style compatibility score
-- Resume/job match percentage
+- Secure user registration and login
+- JWT-protected personal workspace
+- PostgreSQL persistence with Prisma
+- PDF resume upload and text extraction
+- AI-powered ATS-style analysis
+- Resume-to-job match scoring
 - Missing keyword detection
-- Strength identification
-- Actionable improvement suggestions
-- Structured overall summary
-- React dashboard for results
-- Type-safe API contracts
-- OpenAPI and Zod validation
+- Strength and improvement recommendations
+- AI Resume Rewriter with before/after comparison
+- Saved analysis and rewrite history
+- Protected professional PDF report downloads
+- Responsive dashboard
+- Light and dark theme preference
+- Upload validation and API rate limiting
+
+> **Important:** ATS and match scores are AI-generated estimates. They are guidance tools, not hiring decisions or guarantees of interview selection.
 
 ## Architecture
 
 ```text
-              Resume PDF
-                  │
-                  ├──────────────┐
-                  │              │
-                  ▼              ▼
-          PDF Text Extraction   Job Description
-                  │              │
-                  └──────┬───────┘
-                         ▼
-                   Express API
-                         │
-                  Validation Layer
-                         │
-                         ▼
-                  OpenAI Analysis
-                         │
-                         ▼
-                 Structured JSON
-                         │
-                         ▼
-                  React Dashboard
+                    ┌─────────────────────┐
+                    │   React + Vite UI   │
+                    └──────────┬──────────┘
+                               │ HTTPS / REST
+                    ┌──────────▼──────────┐
+                    │ Express + TypeScript│
+                    ├──────────┬──────────┤
+                    │          │          │
+               Authentication  AI     PDF Reports
+                    │          │          │
+                    └──────────┼──────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │ Prisma + PostgreSQL │
+                    └─────────────────────┘
 ```
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React • Vite • TypeScript • Tailwind CSS • shadcn/ui |
-| Backend | Node.js • Express 5 • TypeScript |
-| AI | OpenAI GPT-5.2 |
-| PDF processing | pdf-parse |
-| File upload | Multer |
+| Frontend | React, Vite, TypeScript |
+| Backend | Node.js, Express, TypeScript |
+| Database | PostgreSQL, Prisma |
+| AI | OpenAI API |
+| PDF parsing | pdf-parse |
+| PDF reports | PDFKit |
 | Validation | Zod |
-| API contract | OpenAPI |
-| Data fetching | React Query / generated API client |
-| Workspace | pnpm monorepo |
+| Security | Helmet, rate limiting, JWT |
 
-## Repository Structure
+## Project Structure
 
 ```text
-artifacts/
-├── api-server/                         # Express API
-└── resume-analyzer/                    # React frontend
-lib/
-├── api-spec/                           # OpenAPI source of truth
-├── api-client-react/                   # Generated React API client
-├── api-zod/                            # Generated validation schemas
-└── integrations-openai-ai-server/     # OpenAI integration
-
-package.json
-pnpm-workspace.yaml
+ai-resume-analyzer/
+├── src/                       # React frontend
+│   ├── ResumeAnalyzer.tsx
+│   ├── ResumeRewriter.tsx
+│   └── hooks/useTheme.ts
+├── server/
+│   ├── prisma/schema.prisma
+│   ├── src/routes/
+│   │   ├── auth.routes.ts
+│   │   ├── dashboard.routes.ts
+│   │   ├── rewrite.routes.ts
+│   │   └── report.routes.ts
+│   └── .env.example
+└── README.md
 ```
 
-## Getting Started
+## Local Setup
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm
-- OpenAI API key
+- PostgreSQL 15+
+- An OpenAI API key
 
-### 1. Clone
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/hack2ai/ai-resume-analyzer.git
 cd ai-resume-analyzer
+npm install
+cd server && npm install
 ```
 
-### 2. Install dependencies
+### 2. Configure the backend
 
-```bash
-pnpm install
-```
-
-### 3. Configure environment
-
-Create `artifacts/api-server/.env`:
+Copy `server/.env.example` to `server/.env` and configure:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-PORT=3001
+DATABASE_URL=postgresql://postgres:password@localhost:5432/resumeiq
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-5-mini
+CLIENT_ORIGIN=http://localhost:5173
+JWT_SECRET=use_a_long_random_secret
 ```
 
-Never commit the real API key.
+Never commit `.env` files or API keys.
 
-### 4. Start the API
+### 3. Create database tables
 
 ```bash
-pnpm --filter @workspace/api-server run dev
+cd server
+npx prisma generate
+npx prisma migrate dev
+```
+
+### 4. Start the backend
+
+```bash
+cd server
+npm run dev
 ```
 
 ### 5. Start the frontend
 
-In a second terminal:
-
 ```bash
-pnpm --filter @workspace/resume-analyzer run dev
+npm run dev
 ```
 
-Default local endpoints:
+The default local addresses are:
 
 - Frontend: `http://localhost:5173`
-- API: `http://localhost:3001`
+- Backend: `http://localhost:3001`
 
-## API Contract
+## Production Deployment
 
-### Analyze a resume
+A recommended production architecture is:
 
-```http
-POST /api/analyze
-Content-Type: multipart/form-data
+```text
+Vercel / Netlify  →  React frontend
+        │
+        ▼
+Render / Railway  →  Express API
+        │
+        ▼
+Neon / Supabase / Railway PostgreSQL  →  Database
 ```
 
-Form fields:
+### Production environment variables
 
-| Field | Type | Description |
-|---|---|---|
-| `resume` | PDF file | Resume document to analyze |
-| `jobDescription` | string | Target job description |
+**Frontend**
 
-The API returns structured analysis data including the estimated ATS score, match percentage, missing keywords, strengths, improvements, and summary.
+```env
+VITE_API_URL=https://your-api-domain.example
+```
 
-## Security & Privacy
+**Backend**
 
-Resume documents can contain sensitive personal and professional information. For any public deployment:
+```env
+NODE_ENV=production
+DATABASE_URL=your_production_postgres_url
+OPENAI_API_KEY=your_openai_key
+OPENAI_MODEL=gpt-5-mini
+CLIENT_ORIGIN=https://your-frontend-domain.example
+JWT_SECRET=long_random_production_secret
+JWT_EXPIRES_IN=7d
+MAX_FILE_SIZE_MB=10
+```
 
-- Keep API credentials server-side and in environment variables.
-- Never commit `.env` files or secrets.
-- Validate uploaded files and enforce size/type limits.
-- Avoid retaining uploaded resumes longer than necessary.
-- Use HTTPS in production.
-- Apply authentication and authorization if the application stores user documents.
-- Add rate limiting before exposing the API publicly.
-- Review third-party AI-provider data handling before processing real resumes.
+## API Endpoints
 
-## Engineering Notes
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/auth/register` | Create account |
+| `POST /api/auth/login` | Sign in |
+| `GET /api/auth/me` | Current user |
+| `POST /api/analyze` | Analyze resume |
+| `GET /api/dashboard` | Analysis dashboard |
+| `POST /api/rewrite` | Improve resume content with AI |
+| `GET /api/rewrite/history` | Saved rewrites |
+| `GET /api/reports/:analysisId.pdf` | Download analysis report |
+| `GET /health` | Health check |
 
-The project separates the frontend, API contract, validation schemas, and AI integration so the system can evolve without coupling the UI directly to model responses.
+## Security Notes
 
-The LLM output should be treated as **untrusted application data**: validate the returned structure before rendering or persisting it.
+- Keep API keys and database credentials server-side.
+- Use a long random JWT secret in production.
+- Configure `CLIENT_ORIGIN` to the exact frontend domain.
+- Use HTTPS for all production traffic.
+- Validate PDF type and file size.
+- Keep rate limiting enabled.
+- Rotate any secret that is accidentally committed.
+- Review AI-provider data handling before processing real resumes containing sensitive information.
 
-## Future Improvements
+## Roadmap
 
-- Resume version history
-- Job-description comparison history
 - Explainable scoring breakdown
+- Resume version timeline
 - Streaming analysis progress
-- Authentication and private workspaces
-- Automated resume tailoring with user approval
-- Evaluation dataset for measuring analysis quality
-- Observability and API usage metrics
+- Email notifications
+- Admin observability dashboard
+- Automated deployment workflow
 
 ## Author
 
 **Pankaj (Tony) Kumar**  
-AI Engineer • Full Stack Developer • Generative AI & RAG Specialist
+AI Engineer · Full Stack Developer · Generative AI & RAG Specialist
 
-[GitHub](https://github.com/hack2ai) • [LinkedIn](https://www.linkedin.com/in/pankaj-kumar-ab591a216)
+- GitHub: https://github.com/hack2ai
+- LinkedIn: https://www.linkedin.com/in/pankaj-kumar-ab591a216
 
 ## License
 
