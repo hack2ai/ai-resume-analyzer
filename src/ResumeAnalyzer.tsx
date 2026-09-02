@@ -18,7 +18,7 @@ export default function ResumeAnalyzer(){
  const[file,setFile]=useState<File|null>(null);const[jobDescription,setJobDescription]=useState("");const[jobTitle,setJobTitle]=useState("");
  const[result,setResult]=useState<AnalysisResult|null>(null);const[selected,setSelected]=useState<AnalysisResult|null>(null);
  const[loading,setLoading]=useState(false);const[error,setError]=useState("");const inputRef=useRef<HTMLInputElement>(null);
- const headers=token?{Authorization:`Bearer ${token}`}:{ };
+ const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
  const loadAccount=async()=>{if(!token)return;try{const[me,dash]=await Promise.all([fetch(`${API}/api/auth/me`,{headers}),fetch(`${API}/api/dashboard`,{headers})]);if(!me.ok)throw new Error();setUser((await me.json()).user);if(dash.ok)setDashboard(await dash.json());}catch{localStorage.removeItem("resumeiq_token");setToken("");setUser(null);}};
  useEffect(()=>{loadAccount()},[token]);
  const submitAuth=async()=>{setLoading(true);setError("");try{const body=mode==="register"?auth:{email:auth.email,password:auth.password};const r=await fetch(`${API}/api/auth/${mode==="register"?"register":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error||"Authentication failed");localStorage.setItem("resumeiq_token",d.token);setToken(d.token);setAuth({name:"",email:"",password:""});}catch(e){setError(e instanceof Error?e.message:"Unable to continue");}finally{setLoading(false);}};
