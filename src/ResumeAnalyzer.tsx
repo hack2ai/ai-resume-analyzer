@@ -1,76 +1,34 @@
-import { useRef, useState } from "react";
-import { FileText, Upload, Sparkles, Target, CheckCircle2, AlertTriangle, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FileText, Upload, Sparkles, Target, CheckCircle2, AlertTriangle, X, LogOut, LayoutDashboard, UserRound } from "lucide-react";
 
-type AnalysisResult = {
-  atsScore: number;
-  matchPercentage: number;
-  missingKeywords: string[];
-  strengths: string[];
-  improvements: string[];
-  summary: string;
-};
+type User = { id: string; name: string; email: string };
+type AnalysisResult = { atsScore:number; matchPercentage:number; missingKeywords:string[]; strengths:string[]; improvements:string[]; summary:string; analysisId?:string; createdAt?:string };
+type Dashboard = { stats:{totalAnalyses:number;averageAtsScore:number;latestScore:number}; analyses:Array<AnalysisResult & {id:string;resumeFileName:string;jobTitle:string|null;createdAt:string}> };
+const API = import.meta.env.VITE_API_URL ?? "";
+const scoreColor=(s:number)=>s>=75?"#16a34a":s>=50?"#d97706":"#dc2626";
 
-const scoreColor = (score: number) => score >= 75 ? "#16a34a" : score >= 50 ? "#d97706" : "#dc2626";
-
-export default function ResumeAnalyzer() {
-  const [file, setFile] = useState<File | null>(null);
-  const [jobDescription, setJobDescription] = useState("");
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const selectFile = (selected?: File | null) => {
-    if (!selected) return;
-    if (selected.type !== "application/pdf") return setError("Please upload a PDF resume.");
-    if (selected.size > 10 * 1024 * 1024) return setError("Resume must be smaller than 10 MB.");
-    setFile(selected); setError(""); setResult(null);
-  };
-
-  const analyze = async () => {
-    if (!file || !jobDescription.trim()) return setError("Upload a resume and add a job description first.");
-    setLoading(true); setError(""); setResult(null);
-    try {
-      const formData = new FormData();
-      formData.append("resume", file);
-      formData.append("jobDescription", jobDescription.trim());
-      const response = await fetch(`${import.meta.env.VITE_API_URL ?? ""}/api/analyze`, { method: "POST", body: formData });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Analysis failed.");
-      setResult(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to analyze the resume.");
-    } finally { setLoading(false); }
-  };
-
-  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 20px 72px"}}>
-    <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:48}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}><div style={{padding:10,borderRadius:12,background:"#0f172a",color:"white"}}><FileText size={22}/></div><div><strong style={{fontSize:20}}>ResumeIQ AI</strong><div style={{fontSize:13,color:"#64748b"}}>Professional resume intelligence platform</div></div></div>
-      <span style={{fontSize:13,padding:"7px 12px",borderRadius:999,background:"#e0f2fe",color:"#0369a1"}}>ATS Analysis</span>
-    </header>
-    <section style={{textAlign:"center",maxWidth:760,margin:"0 auto 42px"}}>
-      <div style={{display:"inline-flex",gap:8,alignItems:"center",padding:"8px 14px",borderRadius:999,background:"#f1f5f9",fontSize:14}}><Sparkles size={16}/> AI-powered career intelligence</div>
-      <h1 style={{fontSize:"clamp(2.3rem,6vw,4.5rem)",lineHeight:1.05,letterSpacing:"-0.04em",margin:"20px 0 16px"}}>Turn your resume into a stronger application.</h1>
-      <p style={{fontSize:18,lineHeight:1.7,color:"#64748b"}}>Compare your resume against a target job description and discover ATS gaps, missing keywords, strengths, and practical improvements.</p>
-    </section>
-    <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:20}}>
-      <div style={cardStyle} onClick={()=>inputRef.current?.click()} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();selectFile(e.dataTransfer.files[0]);}}>
-        <Upload size={28} color="#2563eb"/><h2>Upload your resume</h2><p>PDF format, maximum 10 MB. Your file is processed only for this analysis.</p>
-        <input ref={inputRef} hidden type="file" accept="application/pdf,.pdf" onChange={e=>selectFile(e.target.files?.[0])}/>
-        {file ? <div style={{marginTop:16,padding:12,background:"#ecfdf5",borderRadius:10,display:"flex",justifyContent:"space-between",gap:10}}><span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{file.name}</span><button onClick={e=>{e.stopPropagation();setFile(null)}} style={iconButton}><X size={16}/></button></div> : <button style={primaryButton}>Choose PDF</button>}
-      </div>
-      <div style={cardStyle}><Target size={28} color="#7c3aed"/><h2>Target job description</h2><p>Paste the role requirements for a more relevant analysis.</p><textarea value={jobDescription} onChange={e=>setJobDescription(e.target.value)} placeholder="Paste the complete job description, responsibilities, skills and requirements..." style={{width:"100%",minHeight:220,marginTop:12,padding:14,border:"1px solid #cbd5e1",borderRadius:12,resize:"vertical"}}/><small style={{color:"#64748b"}}>{jobDescription.length} characters</small></div>
-    </section>
-    <div style={{textAlign:"center",margin:"28px 0"}}><button disabled={loading} onClick={analyze} style={{...primaryButton,padding:"14px 28px",opacity:loading?.7:1}}>{loading ? "Analyzing your resume..." : "Analyze Resume"}</button></div>
-    {error && <div style={{...cardStyle,borderColor:"#fecaca",background:"#fef2f2",color:"#991b1b",marginBottom:24}}>{error}</div>}
-    {result && <section style={{display:"grid",gap:20}}>
-      <div style={cardStyle}><h2 style={{marginTop:0}}>Analysis overview</h2><div style={{display:"flex",gap:18,flexWrap:"wrap"}}>{[["ATS Score",result.atsScore],["Job Match",result.matchPercentage]].map(([label,score])=><div key={String(label)} style={{flex:"1 1 180px",padding:18,borderRadius:14,background:"#f8fafc"}}><div style={{fontSize:13,color:"#64748b"}}>{label}</div><div style={{fontSize:42,fontWeight:800,color:scoreColor(Number(score))}}>{score}%</div></div>)}</div><p style={{lineHeight:1.7,color:"#475569"}}>{result.summary}</p></div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20}}><ListCard title="Strengths" icon={<CheckCircle2 color="#16a34a"/>} items={result.strengths}/><ListCard title="Missing Keywords" icon={<AlertTriangle color="#d97706"/>} items={result.missingKeywords}/><ListCard title="Priority Improvements" icon={<Sparkles color="#2563eb"/>} items={result.improvements}/></div>
-    </section>}
-  </main>;
+export default function ResumeAnalyzer(){
+ const [token,setToken]=useState(()=>localStorage.getItem("resumeiq_token")||"");
+ const [user,setUser]=useState<User|null>(null); const [dashboard,setDashboard]=useState<Dashboard|null>(null);
+ const [mode,setMode]=useState<"login"|"register">("login"); const [auth,setAuth]=useState({name:"",email:"",password:""});
+ const [file,setFile]=useState<File|null>(null); const [jobDescription,setJobDescription]=useState(""); const [jobTitle,setJobTitle]=useState("");
+ const [result,setResult]=useState<AnalysisResult|null>(null); const [loading,setLoading]=useState(false); const [error,setError]=useState(""); const inputRef=useRef<HTMLInputElement>(null);
+ const headers=token?{Authorization:`Bearer ${token}`}:{ };
+ const loadAccount=async()=>{ if(!token)return; try{const [me,dash]=await Promise.all([fetch(`${API}/api/auth/me`,{headers}),fetch(`${API}/api/dashboard`,{headers})]); if(!me.ok)throw new Error(); const m=await me.json(); setUser(m.user); if(dash.ok)setDashboard(await dash.json());}catch{localStorage.removeItem("resumeiq_token");setToken("");setUser(null);}};
+ useEffect(()=>{loadAccount();},[token]);
+ const submitAuth=async()=>{setLoading(true);setError("");try{const body=mode==="register"?auth:{email:auth.email,password:auth.password};const r=await fetch(`${API}/api/auth/${mode==="register"?"register":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error||"Authentication failed");localStorage.setItem("resumeiq_token",d.token);setToken(d.token);setAuth({name:"",email:"",password:""});}catch(e){setError(e instanceof Error?e.message:"Unable to continue");}finally{setLoading(false);}};
+ const selectFile=(f?:File|null)=>{if(!f)return;if(f.type!=="application/pdf")return setError("Please upload a PDF resume.");if(f.size>10*1024*1024)return setError("Resume must be smaller than 10 MB.");setFile(f);setError("");};
+ const analyze=async()=>{if(!file||!jobDescription.trim())return setError("Upload a resume and add a job description first.");setLoading(true);setError("");try{const form=new FormData();form.append("resume",file);form.append("jobDescription",jobDescription.trim());form.append("jobTitle",jobTitle.trim());const r=await fetch(`${API}/api/analyze`,{method:"POST",headers,body:form});const d=await r.json();if(!r.ok)throw new Error(d.error||"Analysis failed");setResult(d);await loadAccount();}catch(e){setError(e instanceof Error?e.message:"Unable to analyze the resume.");}finally{setLoading(false);}};
+ const logout=()=>{localStorage.removeItem("resumeiq_token");setToken("");setUser(null);setDashboard(null);setResult(null);};
+ if(!token||!user)return <AuthScreen mode={mode} setMode={setMode} auth={auth} setAuth={setAuth} submit={submitAuth} loading={loading} error={error}/>;
+ return <main style={{maxWidth:1180,margin:"0 auto",padding:"28px 20px 70px"}}><header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:20,marginBottom:36}}><div style={{display:"flex",gap:12,alignItems:"center"}}><div style={{padding:10,borderRadius:12,background:"#0f172a",color:"white"}}><FileText/></div><div><strong style={{fontSize:20}}>ResumeIQ AI</strong><div style={{fontSize:13,color:"#64748b"}}>Professional career intelligence</div></div></div><div style={{display:"flex",alignItems:"center",gap:12}}><UserRound size={18}/><span>{user.name}</span><button onClick={logout} style={secondary}><LogOut size={16}/> Logout</button></div></header>
+ <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:16,marginBottom:28}}>{[["Total Analyses",dashboard?.stats.totalAnalyses||0],["Average ATS",`${dashboard?.stats.averageAtsScore||0}%`],["Latest Score",`${dashboard?.stats.latestScore||0}%`]].map(([l,v])=><div key={String(l)} style={card}><div style={{fontSize:13,color:"#64748b"}}>{l}</div><div style={{fontSize:30,fontWeight:800}}>{v}</div></div>)}</section>
+ <section style={{textAlign:"center",maxWidth:760,margin:"0 auto 32px"}}><div style={{display:"inline-flex",gap:8,alignItems:"center",padding:"8px 14px",borderRadius:999,background:"#f1f5f9",fontSize:14}}><Sparkles size={16}/> AI-powered career intelligence</div><h1 style={{fontSize:"clamp(2.1rem,5vw,4rem)",lineHeight:1.05,letterSpacing:"-.04em",margin:"18px 0"}}>Analyze. Improve. Apply with confidence.</h1><p style={{fontSize:17,color:"#64748b",lineHeight:1.7}}>Your analyses are securely saved to your personal dashboard.</p></section>
+ <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:20}}><div style={card} onClick={()=>inputRef.current?.click()}><Upload size={28}/><h2>Upload resume</h2><p>PDF, maximum 10 MB.</p><input ref={inputRef} hidden type="file" accept="application/pdf,.pdf" onChange={e=>selectFile(e.target.files?.[0])}/>{file?<div style={{marginTop:16,padding:12,background:"#ecfdf5",borderRadius:10,display:"flex",justifyContent:"space-between"}}><span>{file.name}</span><button onClick={e=>{e.stopPropagation();setFile(null)}} style={{border:0,background:"transparent"}}><X size={16}/></button></div>:<button style={primary}>Choose PDF</button>}</div><div style={card}><Target size={28}/><h2>Target role</h2><input value={jobTitle} onChange={e=>setJobTitle(e.target.value)} placeholder="e.g. MERN Stack Developer" style={inputStyle}/><textarea value={jobDescription} onChange={e=>setJobDescription(e.target.value)} placeholder="Paste the complete job description..." style={{...inputStyle,minHeight:180,marginTop:12,resize:"vertical"}}/><small style={{color:"#64748b"}}>{jobDescription.length} characters</small></div></section>
+ <div style={{textAlign:"center",margin:"26px 0"}}><button disabled={loading} onClick={analyze} style={{...primary,padding:"14px 28px"}}>{loading?"Analyzing...":"Analyze Resume"}</button></div>{error&&<div style={{...card,borderColor:"#fecaca",background:"#fef2f2",color:"#991b1b"}}>{error}</div>}
+ {result&&<Result result={result}/>}<section style={{marginTop:30}}><div style={{display:"flex",gap:8,alignItems:"center"}}><LayoutDashboard/><h2>Recent analyses</h2></div><div style={{display:"grid",gap:10}}>{dashboard?.analyses.map(a=><div key={a.id} style={{...card,padding:16,display:"flex",justifyContent:"space-between",gap:15}}><div><strong>{a.jobTitle||"Resume analysis"}</strong><div style={{fontSize:13,color:"#64748b"}}>{a.resumeFileName}</div></div><strong style={{color:scoreColor(a.atsScore)}}>{a.atsScore}% ATS</strong></div>)}{!dashboard?.analyses.length&&<p style={{color:"#64748b"}}>Your completed analyses will appear here.</p>}</div></section></main>;
 }
-
-function ListCard({title,icon,items}:{title:string;icon:React.ReactNode;items:string[]}) { return <div style={cardStyle}><div style={{display:"flex",gap:10,alignItems:"center"}}>{icon}<h2 style={{margin:0,fontSize:18}}>{title}</h2></div><ul style={{paddingLeft:20,lineHeight:1.7,color:"#475569"}}>{items.length ? items.map((item,i)=><li key={i}>{item}</li>) : <li>No major issues detected.</li>}</ul></div>; }
-const cardStyle: React.CSSProperties = {background:"white",border:"1px solid #e2e8f0",borderRadius:18,padding:24,boxShadow:"0 8px 30px rgba(15,23,42,.04)"};
-const primaryButton: React.CSSProperties = {marginTop:18,border:0,borderRadius:10,background:"#0f172a",color:"white",padding:"11px 18px",cursor:"pointer",fontWeight:700};
-const iconButton: React.CSSProperties = {border:0,background:"transparent",cursor:"pointer"};
+function AuthScreen(p:any){return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:20}}><section style={{...card,width:"min(460px,100%)"}}><div style={{textAlign:"center"}}><FileText size={34}/><h1>Welcome to ResumeIQ AI</h1><p style={{color:"#64748b"}}>{p.mode==="login"?"Sign in to your dashboard.":"Create your professional account."}</p></div>{p.mode==="register"&&<input placeholder="Full name" value={p.auth.name} onChange={e=>p.setAuth({...p.auth,name:e.target.value})} style={inputStyle}/>}<input placeholder="Email address" value={p.auth.email} onChange={e=>p.setAuth({...p.auth,email:e.target.value})} style={inputStyle}/><input type="password" placeholder="Password (minimum 8 characters)" value={p.auth.password} onChange={e=>p.setAuth({...p.auth,password:e.target.value})} style={inputStyle}/>{p.error&&<p style={{color:"#b91c1c"}}>{p.error}</p>}<button disabled={p.loading} onClick={p.submit} style={{...primary,width:"100%"}}>{p.loading?"Please wait...":p.mode==="login"?"Sign in":"Create account"}</button><button onClick={()=>p.setMode(p.mode==="login"?"register":"login")} style={{...secondary,width:"100%",justifyContent:"center",marginTop:12}}>{p.mode==="login"?"Create a new account":"Already have an account? Sign in"}</button></section></main>}
+function Result({result}:{result:AnalysisResult}){return <section style={{display:"grid",gap:20,marginTop:20}}><div style={card}><h2>Analysis overview</h2><div style={{display:"flex",gap:18,flexWrap:"wrap"}}>{[["ATS Score",result.atsScore],["Job Match",result.matchPercentage]].map(([l,s])=><div key={String(l)} style={{padding:18,borderRadius:14,background:"#f8fafc",flex:"1 1 180px"}}><div style={{fontSize:13,color:"#64748b"}}>{l}</div><div style={{fontSize:38,fontWeight:800,color:scoreColor(Number(s))}}>{s}%</div></div>)}</div><p>{result.summary}</p></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:16}}><List title="Strengths" icon={<CheckCircle2/>} items={result.strengths}/><List title="Missing Keywords" icon={<AlertTriangle/>} items={result.missingKeywords}/><List title="Priority Improvements" icon={<Sparkles/>} items={result.improvements}/></div></section>}
+function List({title,icon,items}:{title:string;icon:React.ReactNode;items:string[]}){return <div style={card}><div style={{display:"flex",gap:8,alignItems:"center"}}>{icon}<h3>{title}</h3></div><ul>{items.map((x,i)=><li key={i}>{x}</li>)}</ul></div>}
+const card:React.CSSProperties={background:"white",border:"1px solid #e2e8f0",borderRadius:18,padding:24,boxShadow:"0 8px 30px rgba(15,23,42,.04)"}; const primary:React.CSSProperties={marginTop:16,border:0,borderRadius:10,background:"#0f172a",color:"white",padding:"11px 18px",cursor:"pointer",fontWeight:700}; const secondary:React.CSSProperties={border:"1px solid #cbd5e1",borderRadius:10,background:"white",padding:"9px 12px",cursor:"pointer",display:"inline-flex",gap:7,alignItems:"center"}; const inputStyle:React.CSSProperties={width:"100%",marginTop:12,padding:13,border:"1px solid #cbd5e1",borderRadius:10,font: "inherit"};
