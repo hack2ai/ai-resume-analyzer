@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: resumeiq-api
+    runtime: node
+    plan: free
+    branch: professional-upgrade
+    rootDir: server
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: OPENAI_MODEL
+        value: gpt-5-mini
+      - key: MAX_FILE_SIZE_MB
+        value: 10
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_ORIGIN
+        sync: false
+
+  - type: web
+    name: resumeiq-web
+    runtime: static
+    branch: professional-upgrade
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        sync: false
