@@ -5,7 +5,7 @@ import ImprovementRoadmap from "./ImprovementRoadmap";
 import SkillGapAnalyzer from "./SkillGapAnalyzer";
 
 type Analysis={id?:string;analysisId?:string;atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];summary:string;resumeFileName?:string;jobTitle?:string|null;createdAt?:string};
-type Props={analyses:Analysis[];currentAnalysis?:Analysis|null;jobDescription:string;resumeText?:string;dark?:boolean;onView:(analysis:Analysis)=>void;onDownload:(analysis:Analysis)=>void};
+type Props={analyses:Analysis[];currentAnalysis?:Analysis|null;jobDescription:string;resumeText?:string;dark?:boolean;onView:(analysis:any)=>void;onDownload:(analysis:any)=>void};
 
 export default function ResumeInsightsSuite({analyses,currentAnalysis,jobDescription,resumeText="",dark=false,onView,onDownload}:Props){
  const analysis=currentAnalysis||analyses[0]||null;
