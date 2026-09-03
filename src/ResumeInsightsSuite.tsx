@@ -8,6 +8,7 @@ import CareerReadinessScore from "./CareerReadinessScore";
 import ResumeActionPlan from "./ResumeActionPlan";
 import ResumeVersionComparison from "./ResumeVersionComparison";
 import InterviewPreparation from "./InterviewPreparation";
+import AIMockInterview from "./AIMockInterview";
 
 type Analysis={id?:string;analysisId?:string;atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];summary:string;resumeFileName?:string;resumeText?:string;jobDescription?:string;jobTitle?:string|null;createdAt?:string};
 type Props={analyses:Analysis[];currentAnalysis?:Analysis|null;jobDescription:string;resumeText?:string;dark?:boolean;onView:(analysis:any)=>void;onDownload:(analysis:any)=>void};
@@ -31,6 +32,7 @@ export default function ResumeInsightsSuite({analyses,currentAnalysis,jobDescrip
   <CareerReadinessScore analysis={analysis} dark={dark}/>
   <ResumeActionPlan analysis={analysis} dark={dark}/>
   <InterviewPreparation analysis={analysis} dark={dark}/>
+  <AIMockInterview analysis={analysis} dark={dark}/>
   <AnalysisDetails analysis={analysis} dark={dark}/>
   <CareerRecommendations analysis={analysis} dark={dark}/>
   <ImprovementRoadmap analysis={analysis} dark={dark}/>
