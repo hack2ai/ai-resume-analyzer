@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id           String           @id @default(cuid())
-  name         String
-  email        String           @unique
-  passwordHash String
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  analyses     ResumeAnalysis[]
-  rewrites     ResumeRewrite[]
-  coverLetters CoverLetter[]
+  id            String           @id @default(cuid())
+  name          String
+  email         String           @unique
+  passwordHash  String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  analyses      ResumeAnalysis[]
+  rewrites      ResumeRewrite[]
+  coverLetters  CoverLetter[]
+  applications  JobApplication[]
 }
 
 model ResumeAnalysis {
@@ -35,7 +36,6 @@ model ResumeAnalysis {
   createdAt         DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId, createdAt])
 }
 
@@ -51,7 +51,6 @@ model ResumeRewrite {
   createdAt          DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId, createdAt])
 }
 
@@ -66,6 +65,21 @@ model CoverLetter {
   createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId, createdAt])
+}
+
+model JobApplication {
+  id        String   @id @default(cuid())
+  userId    String
+  company   String
+  role      String
+  status    String
+  appliedAt DateTime
+  notes     String   @default("") @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, appliedAt])
+  @@index([userId, status])
 }
