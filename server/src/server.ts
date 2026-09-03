@@ -19,8 +19,6 @@ const port = Number(process.env.PORT || 3001);
 const maxFileSize = Number(process.env.MAX_FILE_SIZE_MB || 10) * 1024 * 1024;
 const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((origin) => origin.trim()).filter(Boolean);
 
-// Google AI Studio / Gemini is used through Google's OpenAI-compatible endpoint.
-// This lets the existing OpenAI TypeScript SDK stay in place while using a Gemini API key.
 const gemini = process.env.GEMINI_API_KEY
   ? new OpenAI({
       apiKey: process.env.GEMINI_API_KEY,
@@ -72,6 +70,7 @@ app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: Authe
     }
     if (!gemini) return res.status(503).json({ error: "AI analysis is not configured. Add GEMINI_API_KEY on the server." });
 
+    const jobDescription = req.body.jobDescription.trim();
     const parsed = await pdf(req.file.buffer);
     const resumeText = parsed.text.replace(/\s+/g, " ").trim();
     if (resumeText.length < 100) return res.status(400).json({ error: "The PDF does not contain enough readable resume text." });
@@ -81,7 +80,7 @@ app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: Authe
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: "You are a precise resume and ATS analyst. Return only valid JSON with atsScore, matchPercentage, missingKeywords, strengths, improvements, and summary. Scores are estimates, not hiring decisions. Be practical and do not invent experience." },
-        { role: "user", content: `RESUME:\n${resumeText}\n\nTARGET JOB DESCRIPTION:\n${req.body.jobDescription.trim()}\n\nAnalyze the match and return the requested JSON.` }
+        { role: "user", content: `RESUME:\n${resumeText}\n\nTARGET JOB DESCRIPTION:\n${jobDescription}\n\nAnalyze the match and return the requested JSON.` }
       ]
     });
 
@@ -89,11 +88,24 @@ app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: Authe
     if (!content) throw new Error("The AI service returned an empty response.");
     const analysis = outputSchema.parse(JSON.parse(content));
     const saved = await prisma.resumeAnalysis.create({
-      data: { userId: req.user!.id, resumeFileName: req.file.originalname, jobTitle: req.body.jobTitle?.trim() || null, ...analysis }
+      data: {
+        userId: req.user!.id,
+        resumeFileName: req.file.originalname,
+        resumeText,
+        jobTitle: req.body.jobTitle?.trim() || null,
+        jobDescription,
+        ...analysis
+      }
     });
-    // Return extracted text for client-side keyword and skill-gap calculations.
-    // It is not persisted in the analysis record.
-    res.json({ ...analysis, analysisId: saved.id, createdAt: saved.createdAt, resumeText });
+
+    res.json({
+      ...analysis,
+      analysisId: saved.id,
+      createdAt: saved.createdAt,
+      resumeText: saved.resumeText,
+      jobDescription: saved.jobDescription,
+      jobTitle: saved.jobTitle
+    });
   } catch (error) {
     console.error("Analysis error", error);
     if (error instanceof z.ZodError) return res.status(502).json({ error: "The AI returned an invalid analysis format." });
