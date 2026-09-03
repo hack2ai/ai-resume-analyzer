@@ -16,6 +16,7 @@ model User {
   updatedAt    DateTime         @updatedAt
   analyses     ResumeAnalysis[]
   rewrites     ResumeRewrite[]
+  coverLetters CoverLetter[]
 }
 
 model ResumeAnalysis {
@@ -48,6 +49,21 @@ model ResumeRewrite {
   improvements       String[]
   keywordSuggestions String[]
   createdAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model CoverLetter {
+  id             String   @id @default(cuid())
+  userId         String
+  targetRole     String
+  company        String?
+  jobDescription String   @db.Text
+  resumeText     String   @db.Text
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
