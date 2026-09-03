@@ -8,7 +8,21 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res) => {
   const analyses = await prisma.resumeAnalysis.findMany({
     where: { userId: req.user!.id },
     orderBy: { createdAt: "desc" },
-    take: 20
+    take: 20,
+    select: {
+      id: true,
+      resumeFileName: true,
+      resumeText: true,
+      jobTitle: true,
+      jobDescription: true,
+      atsScore: true,
+      matchPercentage: true,
+      summary: true,
+      missingKeywords: true,
+      strengths: true,
+      improvements: true,
+      createdAt: true,
+    },
   });
 
   const totalAnalyses = analyses.length;
@@ -21,9 +35,9 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res) => {
     stats: {
       totalAnalyses,
       averageAtsScore,
-      latestScore: latest?.atsScore ?? 0
+      latestScore: latest?.atsScore ?? 0,
     },
-    analyses
+    analyses,
   });
 });
 
