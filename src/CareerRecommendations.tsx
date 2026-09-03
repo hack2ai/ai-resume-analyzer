@@ -1,14 +1,26 @@
 import { useMemo } from "react";
 import { BrainCircuit, BriefcaseBusiness, Compass, GraduationCap, Sparkles, Target, TrendingUp } from "lucide-react";
+import { getReadiness } from "./CareerReadinessScore";
 
 type Analysis={atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];jobTitle?:string|null};
 type Props={analysis?:Analysis|null;dark?:boolean};
 
 export default function CareerRecommendations({analysis,dark=false}:Props){
- const data=useMemo(()=>{if(!analysis)return null;const score=Math.round((analysis.atsScore+analysis.matchPercentage)/2);const level=score>=80?"Interview Ready":score>=65?"Strong Foundation":score>=45?"Developing Profile":"Needs Focus";return{score,level,nextSkills:analysis.missingKeywords.slice(0,6),priorities:analysis.improvements.slice(0,4),roles:[...new Set([analysis.jobTitle,"Software Developer","Full Stack Developer","Web Developer"].filter((role):role is string=>Boolean(role)))]};},[analysis]);
+ const data=useMemo(()=>{
+  if(!analysis)return null;
+  const readiness=getReadiness(analysis);
+  const level=readiness.score>=85?"Interview Ready":readiness.score>=70?"Strong Foundation":readiness.score>=55?"Developing Profile":"Needs Focus";
+  return{
+   readinessScore:readiness.score,
+   level,
+   nextSkills:analysis.missingKeywords.slice(0,6),
+   priorities:analysis.improvements.slice(0,4),
+   roles:[...new Set([analysis.jobTitle,"Software Developer","Full Stack Developer","Web Developer"].filter((role):role is string=>Boolean(role)))]
+  };
+ },[analysis]);
  if(!analysis||!data)return <section style={card(dark)}><div style={empty}><BrainCircuit size={28}/><h3>Career recommendations will appear here</h3><p>Complete a resume analysis to receive personalized role, skill, and readiness recommendations.</p></div></section>;
  return <section style={card(dark)}><div style={{display:"flex",justifyContent:"space-between",gap:14,alignItems:"flex-start",flexWrap:"wrap"}}><div><div style={eyebrow}><Sparkles size={15}/> AI career guidance</div><h2 style={{margin:"10px 0 6px"}}>Your next best career moves</h2><p style={{margin:0,opacity:.65}}>Recommendations based on your current resume analysis.</p></div><div style={{padding:"10px 13px",borderRadius:999,background:"rgba(124,58,237,.12)",color:"#6d28d9",fontWeight:800}}>{data.level}</div></div>
- <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:12,marginTop:20}}><Metric icon={<Target size={18}/>} label="Career readiness" value={`${data.score}%`}/><Metric icon={<TrendingUp size={18}/>} label="ATS score" value={`${analysis.atsScore}%`}/><Metric icon={<BriefcaseBusiness size={18}/>} label="Job match" value={`${analysis.matchPercentage}%`}/></div>
+ <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:12,marginTop:20}}><Metric icon={<Target size={18}/>} label="Career readiness" value={`${data.readinessScore}%`}/><Metric icon={<TrendingUp size={18}/>} label="ATS score" value={`${analysis.atsScore}%`}/><Metric icon={<BriefcaseBusiness size={18}/>} label="Job match" value={`${analysis.matchPercentage}%`}/></div>
  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:14,marginTop:18}}><Panel icon={<Compass size={19}/>} title="Best-fit roles"><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{data.roles.map(role=><span key={role} style={chip}>{role}</span>)}</div></Panel><Panel icon={<GraduationCap size={19}/>} title="Skills to strengthen"><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{data.nextSkills.length?data.nextSkills.map(skill=><span key={skill} style={chip}>{skill}</span>):<Muted>No major skill gaps detected.</Muted>}</div></Panel><Panel icon={<Target size={19}/>} title="Improvement priorities">{data.priorities.length?<ol style={{margin:"0 0 0 18px",padding:0,lineHeight:1.75}}>{data.priorities.map((item,i)=><li key={i}>{item}</li>)}</ol>:<Muted>Your resume already has a strong baseline. Keep tailoring it to each job.</Muted>}</Panel></div></section>;
 }
 function Metric({icon,label,value}:{icon:React.ReactNode;label:string;value:string}){return <div style={{padding:15,borderRadius:17,background:"rgba(124,58,237,.08)"}}><div style={{display:"flex",gap:7,alignItems:"center",color:"#7c3aed",fontSize:13,fontWeight:700}}>{icon}{label}</div><strong style={{fontSize:27,display:"block",marginTop:7}}>{value}</strong></div>}
