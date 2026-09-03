@@ -91,7 +91,9 @@ app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: Authe
     const saved = await prisma.resumeAnalysis.create({
       data: { userId: req.user!.id, resumeFileName: req.file.originalname, jobTitle: req.body.jobTitle?.trim() || null, ...analysis }
     });
-    res.json({ ...analysis, analysisId: saved.id, createdAt: saved.createdAt });
+    // Return extracted text for client-side keyword and skill-gap calculations.
+    // It is not persisted in the analysis record.
+    res.json({ ...analysis, analysisId: saved.id, createdAt: saved.createdAt, resumeText });
   } catch (error) {
     console.error("Analysis error", error);
     if (error instanceof z.ZodError) return res.status(502).json({ error: "The AI returned an invalid analysis format." });
