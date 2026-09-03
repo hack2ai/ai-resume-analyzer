@@ -1,13 +1,14 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/auth.js";
 
 const router = Router();
 const credentials = z.object({ name: z.string().trim().min(2).max(80).optional(), email: z.string().email(), password: z.string().min(8).max(128) });
-const sign = (id: string, email: string) => jwt.sign({ id, email }, process.env.JWT_SECRET || "", { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
+const getJwtOptions = (): SignOptions => ({ expiresIn: (process.env.JWT_EXPIRES_IN || "7d") as SignOptions["expiresIn"] });
+const sign = (id: string, email: string) => jwt.sign({ id, email }, process.env.JWT_SECRET || "", getJwtOptions());
 
 const authConfigError = () => !process.env.JWT_SECRET ? "JWT_SECRET is not configured on the server." : null;
 
