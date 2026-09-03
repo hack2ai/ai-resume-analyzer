@@ -4,7 +4,7 @@ type Analysis={atsScore:number;matchPercentage:number;missingKeywords:string[];s
 type Props={analysis:Analysis|null;dark?:boolean};
 
 function clamp(value:number,min=0,max=100){return Math.max(min,Math.min(max,value));}
-function getReadiness(analysis:Analysis){
+export function getReadiness(analysis:Analysis){
  const keywordCoverage=analysis.missingKeywords.length===0
    ? 100
    : clamp(100-analysis.missingKeywords.length*7);
