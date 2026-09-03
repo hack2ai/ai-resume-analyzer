@@ -27,7 +27,7 @@
   },
   "devDependencies":{
     "@types/bcryptjs":"^2.4.6",
-    "@types/cors":"^2.8.17",
+    "@types/cors":"^2.4.6",
     "@types/express":"^5.0.1",
     "@types/jsonwebtoken":"^9.0.9",
     "@types/multer":"^1.4.12",
@@ -37,5 +37,8 @@
     "prisma":"^6.4.1",
     "tsx":"^4.19.2",
     "typescript":"^5.7.3"
+  },
+  "overrides":{
+    "deepmerge-ts":"^8.0.0"
   }
 }
