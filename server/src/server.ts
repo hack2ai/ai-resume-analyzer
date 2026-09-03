@@ -16,6 +16,7 @@ import reportRoutes from "./routes/report.routes.js";
 import coverLetterRoutes from "./routes/cover-letter.routes.js";
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
 const port = Number(process.env.PORT || 3001);
 const maxFileSize = Number(process.env.MAX_FILE_SIZE_MB || 10) * 1024 * 1024;
 const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((origin) => origin.trim()).filter(Boolean);
@@ -31,9 +32,15 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: true,
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: maxFileSize, files: 1 }, fileFilter: (_req, file, callback) => callback(null, file.mimetype === "application/pdf" || file.originalname.toLowerCase().endsWith(".pdf")) });
 const outputSchema = z.object({ atsScore: z.number().min(0).max(100), matchPercentage: z.number().min(0).max(100), missingKeywords: z.array(z.string()).max(20), strengths: z.array(z.string()).max(20), improvements: z.array(z.string()).max(20), summary: z.string().max(1200) });
 const applicationStatuses = ["Applied", "Interview", "Offer", "Rejected"] as const;
-type ApplicationStatus = (typeof applicationStatuses)[number];
 const applicationSchema = z.object({ company: z.string().trim().min(1).max(120), role: z.string().trim().min(1).max(160), status: z.enum(applicationStatuses).default("Applied"), appliedAt: z.coerce.date(), notes: z.string().max(5000).optional().default("") });
 const applicationUpdateSchema = z.object({ company: z.string().trim().min(1).max(120).optional(), role: z.string().trim().min(1).max(160).optional(), status: z.enum(applicationStatuses).optional(), appliedAt: z.coerce.date().optional(), notes: z.string().max(5000).optional() });
+
+if (isProduction) {
+  const missing = ["JWT_SECRET", "DATABASE_URL", "GEMINI_API_KEY"].filter((name) => !process.env[name]);
+  if (missing.length) {
+    throw new Error(`Missing required production environment variables: ${missing.join(", ")}`);
+  }
+}
 
 app.get("/health", (_req, res) => res.json({ status: "ok", service: "resumeiq-api" }));
 app.use("/api/auth", authRoutes);
@@ -43,9 +50,9 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/cover-letter", coverLetterRoutes);
 
 app.get("/api/applications", requireAuth, async (req: AuthenticatedRequest, res) => { const applications = await prisma.jobApplication.findMany({ where: { userId: req.user!.id }, orderBy: { appliedAt: "desc" } }); res.json(applications); });
-app.post("/api/applications", requireAuth, async (req: AuthenticatedRequest, res) => { try { const data = applicationSchema.parse(req.body); const application = await prisma.jobApplication.create({ data: { company: data.company, role: data.role, status: data.status as ApplicationStatus, appliedAt: data.appliedAt, notes: data.notes, userId: req.user!.id } }); res.status(201).json(application); } catch (error) { if (error instanceof z.ZodError) return res.status(400).json({ error: "Please provide a valid company, role, status, and date." }); return res.status(500).json({ error: "Unable to save the application." }); } });
-app.patch("/api/applications/:id", requireAuth, async (req: AuthenticatedRequest, res) => { try { const data = applicationUpdateSchema.parse(req.body); const existing = await prisma.jobApplication.findFirst({ where: { id: req.params.id, userId: req.user!.id } }); if (!existing) return res.status(404).json({ error: "Application not found." }); const application = await prisma.jobApplication.update({ where: { id: existing.id }, data: { ...data, status: data.status as ApplicationStatus | undefined } }); res.json(application); } catch (error) { if (error instanceof z.ZodError) return res.status(400).json({ error: "Invalid application update." }); return res.status(500).json({ error: "Unable to update the application." }); } });
-app.delete("/api/applications/:id", requireAuth, async (req: AuthenticatedRequest, res) => { const existing = await prisma.jobApplication.findFirst({ where: { id: req.params.id, userId: req.user!.id } }); if (!existing) return res.status(404).json({ error: "Application not found." }); await prisma.jobApplication.delete({ where: { id: existing.id } }); res.status(204).send(); });
+app.post("/api/applications", requireAuth, async (req: AuthenticatedRequest, res) => { try { const data = applicationSchema.parse(req.body); const application = await prisma.jobApplication.create({ data: { company: data.company, role: data.role, status: data.status, appliedAt: data.appliedAt, notes: data.notes, userId: req.user!.id } }); return res.status(201).json(application); } catch (error) { if (error instanceof z.ZodError) return res.status(400).json({ error: "Please provide a valid company, role, status, and date." }); console.error("Create application error:", error); return res.status(500).json({ error: "Unable to save the application." }); } });
+app.patch("/api/applications/:id", requireAuth, async (req: AuthenticatedRequest, res) => { try { const data = applicationUpdateSchema.parse(req.body); const applicationId = String(req.params.id); const existing = await prisma.jobApplication.findFirst({ where: { id: applicationId, userId: req.user!.id } }); if (!existing) return res.status(404).json({ error: "Application not found." }); const application = await prisma.jobApplication.update({ where: { id: existing.id }, data }); return res.json(application); } catch (error) { if (error instanceof z.ZodError) return res.status(400).json({ error: "Invalid application update." }); console.error("Update application error:", error); return res.status(500).json({ error: "Unable to update the application." }); } });
+app.delete("/api/applications/:id", requireAuth, async (req: AuthenticatedRequest, res) => { try { const applicationId = String(req.params.id); const existing = await prisma.jobApplication.findFirst({ where: { id: applicationId, userId: req.user!.id } }); if (!existing) return res.status(404).json({ error: "Application not found." }); await prisma.jobApplication.delete({ where: { id: existing.id } }); return res.status(204).send(); } catch (error) { console.error("Delete application error:", error); return res.status(500).json({ error: "Unable to delete the application." }); } });
 
 app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: AuthenticatedRequest, res) => {
  try {
@@ -59,8 +66,9 @@ app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: Authe
   const content = response.choices[0]?.message?.content; if (!content) throw new Error("The AI service returned an empty response.");
   const analysis = outputSchema.parse(JSON.parse(content));
   const saved = await prisma.resumeAnalysis.create({ data: { userId: req.user!.id, resumeFileName: req.file.originalname, resumeText, jobTitle: req.body.jobTitle?.trim() || null, jobDescription, ...analysis } });
-  res.json({ ...analysis, analysisId: saved.id, createdAt: saved.createdAt, resumeText: saved.resumeText, jobDescription: saved.jobDescription, jobTitle: saved.jobTitle });
- } catch (error) { console.error("Analysis error", error); if (error instanceof z.ZodError) return res.status(502).json({ error: "The AI returned an invalid analysis format." }); return res.status(500).json({ error: error instanceof Error ? error.message : "Unable to analyze the resume." }); }
+  return res.json({ ...analysis, analysisId: saved.id, createdAt: saved.createdAt, resumeText: saved.resumeText, jobDescription: saved.jobDescription, jobTitle: saved.jobTitle });
+ } catch (error) { console.error("Analysis error:", error); if (error instanceof z.ZodError) return res.status(502).json({ error: "The AI returned an invalid analysis format." }); return res.status(500).json({ error: isProduction ? "Unable to analyze the resume right now." : error instanceof Error ? error.message : "Unable to analyze the resume." }); }
 });
-app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => { if (error instanceof multer.MulterError) return res.status(400).json({ error: error.message }); if (error instanceof Error && error.message === "Origin is not allowed by CORS") return res.status(403).json({ error: error.message }); console.error("Unexpected server error", error); return res.status(500).json({ error: "Unexpected server error." }); });
+app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => { if (error instanceof multer.MulterError) return res.status(400).json({ error: error.message }); if (error instanceof Error && error.message === "Origin is not allowed by CORS") return res.status(403).json({ error: error.message }); console.error("Unexpected server error:", error); return res.status(500).json({ error: isProduction ? "Internal server error." : "Unexpected server error." }); });
+
 app.listen(port, () => console.log(`ResumeIQ API listening on port ${port}`));
