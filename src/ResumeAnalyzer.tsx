@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Upload, Sparkles, Target, CheckCircle2, AlertTriangle, X, LogOut, LayoutDashboard, UserRound, Download, Eye, Sun, Moon, ShieldCheck, TrendingUp, Zap, ArrowRight, FileUp } from "lucide-react";
+import { Upload, Sparkles, Target, CheckCircle2, AlertTriangle, X, LogOut, LayoutDashboard, UserRound, Download, Sun, Moon, ShieldCheck, TrendingUp, Zap, ArrowRight, FileUp } from "lucide-react";
 import ResumeRewriter from "./ResumeRewriter";
 import AnalysisProgress from "./AnalysisProgress";
 import ResumeInsightsSuite from "./ResumeInsightsSuite";
 import { useTheme } from "./hooks/useTheme";
 
 type User={id:string;name:string;email:string};
-type AnalysisResult={id?:string;atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];summary:string;analysisId?:string;resumeFileName?:string;jobTitle?:string|null;createdAt?:string;resumeText?:string};
+type AnalysisResult={id?:string;atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];summary:string;analysisId?:string;resumeFileName?:string;jobTitle?:string|null;jobDescription?:string;createdAt?:string;resumeText?:string};
 type Dashboard={stats:{totalAnalyses:number;averageAtsScore:number;latestScore:number};analyses:AnalysisResult[]};
 const API=import.meta.env.VITE_API_URL??"";
 const scoreColor=(s:number)=>s>=75?"#22c55e":s>=50?"#f59e0b":"#ef4444";
@@ -25,7 +25,8 @@ export default function ResumeAnalyzer(){
  const submitAuth=async()=>{setLoading(true);setError("");try{const body=mode==="register"?auth:{email:auth.email,password:auth.password};const r=await fetch(`${API}/api/auth/${mode==="register"?"register":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error||"Authentication failed");localStorage.setItem("resumeiq_token",d.token);setToken(d.token);setAuth({name:"",email:"",password:""});}catch(e){setError(e instanceof Error?e.message:"Unable to continue");}finally{setLoading(false);}};
  const selectFile=(f?:File|null)=>{if(!f)return;if(f.type!=="application/pdf")return setError("Please upload a PDF resume.");if(f.size>10*1024*1024)return setError("Resume must be smaller than 10 MB.");setFile(f);setError("");};
  const analyze=async()=>{if(!file||!jobDescription.trim())return setError("Upload a resume and add a job description first.");setLoading(true);setError("");setResult(null);try{const form=new FormData();form.append("resume",file);form.append("jobDescription",jobDescription.trim());form.append("jobTitle",jobTitle.trim());const r=await fetch(`${API}/api/analyze`,{method:"POST",headers,body:form});const d=await r.json();if(!r.ok)throw new Error(d.error||"Analysis failed");setResult(d);await loadAccount();}catch(e){setError(e instanceof Error?e.message:"Unable to analyze the resume.");}finally{setLoading(false);}};
- const logout=()=>{localStorage.removeItem("resumeiq_token");setToken("");setUser(null);setDashboard(null);setResult(null);};
+ const handleView=(analysis:AnalysisResult)=>{setSelected(analysis);setResult(analysis);if(analysis.jobDescription)setJobDescription(analysis.jobDescription);else setJobDescription("");if(analysis.jobTitle)setJobTitle(analysis.jobTitle);else setJobTitle("");window.scrollTo({top:0,behavior:"smooth"});};
+ const logout=()=>{localStorage.removeItem("resumeiq_token");setToken("");setUser(null);setDashboard(null);setResult(null);setSelected(null);};
  const download=async(a:AnalysisResult)=>{const id=a.id||a.analysisId;if(!id)return;try{const r=await fetch(`${API}/api/reports/${id}.pdf`,{headers});if(!r.ok)throw new Error("Unable to generate report");const blob=await r.blob();const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=`resumeiq-analysis-${id}.pdf`;link.click();URL.revokeObjectURL(url);}catch(e){setError(e instanceof Error?e.message:"Report download failed.");}};
  if(!token||!user)return <AuthScreen mode={mode} setMode={setMode} auth={auth} setAuth={setAuth} submit={submitAuth} loading={loading} error={error} theme={theme} toggleTheme={toggleTheme}/>;
  return <main className={`app-shell ${dark?"dark":""}`}><div className="app-container"><header style={headerStyle(dark)}><div style={{display:"flex",alignItems:"center",gap:12}}><div style={logo}><Sparkles size={20}/></div><div><strong style={{fontSize:20}}>ResumeIQ <span style={{color:"#7c3aed"}}>AI</span></strong><div style={{fontSize:12,opacity:.58}}>Career intelligence workspace</div></div></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><button onClick={toggleTheme} style={secondary(dark)}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button><div style={{fontSize:14,display:"flex",alignItems:"center",gap:7}}><UserRound size={16}/>{user.name}</div><button onClick={logout} style={secondary(dark)}><LogOut size={16}/>Logout</button></div></header>
@@ -36,7 +37,7 @@ export default function ResumeAnalyzer(){
  {loading&&<div style={{marginTop:18}}><AnalysisProgress active={loading} dark={dark}/></div>}
  {error&&<div style={{...panel(dark),borderColor:"#ef4444",color:"#ef4444",marginTop:18}}>{error}</div>}
  {result&&<Result result={result} onDownload={()=>download(result)} theme={theme}/>}<ResumeRewriter token={token}/>
- <ResumeInsightsSuite analyses={dashboard?.analyses||[]} currentAnalysis={result} jobDescription={jobDescription} resumeText={result?.resumeText||""} dark={dark} onView={setSelected} onDownload={download}/>
+ <ResumeInsightsSuite analyses={dashboard?.analyses||[]} currentAnalysis={result} jobDescription={jobDescription} resumeText={result?.resumeText||""} dark={dark} onView={handleView} onDownload={download}/>
  {selected&&<div style={{position:"fixed",inset:0,background:"rgba(2,6,23,.76)",display:"grid",placeItems:"center",padding:18,zIndex:30}}><div style={{...panel(dark),width:"min(800px,100%)",maxHeight:"86vh",overflow:"auto"}}><div style={{display:"flex",justifyContent:"space-between",gap:15}}><h2>{selected.jobTitle||"Analysis details"}</h2><button onClick={()=>setSelected(null)} style={secondary(dark)}>Close</button></div><Result result={selected} onDownload={()=>download(selected)} theme={theme}/></div></div>}</div></main>;
 }
 
