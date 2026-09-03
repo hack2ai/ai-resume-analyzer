@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Upload, Sparkles, Target, CheckCircle2, AlertTriangle, X, LogOut, LayoutDashboard, UserRound, Download, Eye, Sun, Moon, ShieldCheck, TrendingUp, Zap, ArrowRight, FileUp } from "lucide-react";
 import ResumeRewriter from "./ResumeRewriter";
 import AnalysisProgress from "./AnalysisProgress";
+import ResumeInsightsSuite from "./ResumeInsightsSuite";
 import { useTheme } from "./hooks/useTheme";
 
 type User={id:string;name:string;email:string};
-type AnalysisResult={id?:string;atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];summary:string;analysisId?:string;resumeFileName?:string;jobTitle?:string|null};
+type AnalysisResult={id?:string;atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];summary:string;analysisId?:string;resumeFileName?:string;jobTitle?:string|null;createdAt?:string};
 type Dashboard={stats:{totalAnalyses:number;averageAtsScore:number;latestScore:number};analyses:AnalysisResult[]};
 const API=import.meta.env.VITE_API_URL??"";
 const scoreColor=(s:number)=>s>=75?"#22c55e":s>=50?"#f59e0b":"#ef4444";
@@ -35,7 +36,7 @@ export default function ResumeAnalyzer(){
  {loading&&<div style={{marginTop:18}}><AnalysisProgress active={loading} dark={dark}/></div>}
  {error&&<div style={{...panel(dark),borderColor:"#ef4444",color:"#ef4444",marginTop:18}}>{error}</div>}
  {result&&<Result result={result} onDownload={()=>download(result)} theme={theme}/>}<ResumeRewriter token={token}/>
- <section style={{marginTop:34}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}><div><div style={{display:"flex",gap:8,alignItems:"center"}}><LayoutDashboard size={19}/><h2 style={{margin:0}}>Recent analyses</h2></div><p style={{opacity:.6,margin:"6px 0 0"}}>Review your previous career reports.</p></div></div><div style={{display:"grid",gap:10}}>{dashboard?.analyses.map(a=><div key={a.id} style={{...panel(dark),padding:16,display:"flex",justifyContent:"space-between",gap:15,alignItems:"center",flexWrap:"wrap"}}><div><strong>{a.jobTitle||"Resume analysis"}</strong><div style={{fontSize:13,opacity:.6}}>{a.resumeFileName||"Resume"}</div></div><div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><strong style={{color:scoreColor(a.atsScore)}}>{a.atsScore}% ATS</strong><button onClick={()=>setSelected(a)} style={secondary(dark)}><Eye size={16}/>View</button><button onClick={()=>download(a)} style={secondary(dark)}><Download size={16}/>PDF</button></div></div>)}{!dashboard?.analyses.length&&<div style={{...panel(dark),textAlign:"center",opacity:.65}}>Your completed analyses will appear here.</div>}</div></section>
+ <ResumeInsightsSuite analyses={dashboard?.analyses||[]} currentAnalysis={result} jobDescription={jobDescription} dark={dark} onView={setSelected} onDownload={download}/>
  {selected&&<div style={{position:"fixed",inset:0,background:"rgba(2,6,23,.76)",display:"grid",placeItems:"center",padding:18,zIndex:30}}><div style={{...panel(dark),width:"min(800px,100%)",maxHeight:"86vh",overflow:"auto"}}><div style={{display:"flex",justifyContent:"space-between",gap:15}}><h2>{selected.jobTitle||"Analysis details"}</h2><button onClick={()=>setSelected(null)} style={secondary(dark)}>Close</button></div><Result result={selected} onDownload={()=>download(selected)} theme={theme}/></div></div>}</div></main>;
 }
 
