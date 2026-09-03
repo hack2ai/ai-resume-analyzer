@@ -19,18 +19,19 @@ const app = express();
 const port = Number(process.env.PORT || 3001);
 const maxFileSize = Number(process.env.MAX_FILE_SIZE_MB || 10) * 1024 * 1024;
 const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((origin) => origin.trim()).filter(Boolean);
-
 const gemini = process.env.GEMINI_API_KEY ? new OpenAI({ apiKey: process.env.GEMINI_API_KEY, baseURL: process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai/", defaultHeaders: { "x-goog-api-client": "resumeiq-ai/2.0" } }) : null;
 
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 app.use(helmet());
-app.use(cors({ origin(origin, callback) { if (!origin || allowedOrigins.includes(origin)) return callback(null, true); return callback(new Error("Origin is not allowed by CORS")); }, methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type", "Authorization"] }));
+app.use(cors({ origin(origin, callback) { if (!origin || allowedOrigins.includes(origin)) return callback(null, true); return callback(new Error("Origin is not allowed by CORS")); }, methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"], allowedHeaders: ["Content-Type", "Authorization"] }));
 app.use(express.json({ limit: "1mb" }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: true, legacyHeaders: false }));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: maxFileSize, files: 1 }, fileFilter: (_req, file, callback) => callback(null, file.mimetype === "application/pdf" || file.originalname.toLowerCase().endsWith(".pdf")) });
 const outputSchema = z.object({ atsScore: z.number().min(0).max(100), matchPercentage: z.number().min(0).max(100), missingKeywords: z.array(z.string()).max(20), strengths: z.array(z.string()).max(20), improvements: z.array(z.string()).max(20), summary: z.string().max(1200) });
+const applicationStatuses = ["Applied", "Interview", "Offer", "Rejected"] as const;
+const applicationSchema = z.object({ company: z.string().trim().min(1).max(120), role: z.string().trim().min(1).max(160), status: z.enum(applicationStatuses).default("Applied"), appliedAt: z.coerce.date(), notes: z.string().max(5000).optional().default("") });
 
 app.get("/health", (_req, res) => res.json({ status: "ok", service: "resumeiq-api" }));
 app.use("/api/auth", authRoutes);
@@ -38,6 +39,11 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/rewrite", rewriteRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/cover-letter", coverLetterRoutes);
+
+app.get("/api/applications", requireAuth, async (req: AuthenticatedRequest, res) => { const applications = await prisma.jobApplication.findMany({ where: { userId: req.user!.id }, orderBy: { appliedAt: "desc" } }); res.json(applications); });
+app.post("/api/applications", requireAuth, async (req: AuthenticatedRequest, res) => { try { const data = applicationSchema.parse(req.body); const application = await prisma.jobApplication.create({ data: { ...data, userId: req.user!.id } }); res.status(201).json(application); } catch (error) { if (error instanceof z.ZodError) return res.status(400).json({ error: "Please provide a valid company, role, status, and date." }); return res.status(500).json({ error: "Unable to save the application." }); } });
+app.patch("/api/applications/:id", requireAuth, async (req: AuthenticatedRequest, res) => { try { const data = applicationSchema.partial().parse(req.body); const existing = await prisma.jobApplication.findFirst({ where: { id: req.params.id, userId: req.user!.id } }); if (!existing) return res.status(404).json({ error: "Application not found." }); const application = await prisma.jobApplication.update({ where: { id: existing.id }, data }); res.json(application); } catch (error) { if (error instanceof z.ZodError) return res.status(400).json({ error: "Invalid application update." }); return res.status(500).json({ error: "Unable to update the application." }); } });
+app.delete("/api/applications/:id", requireAuth, async (req: AuthenticatedRequest, res) => { const existing = await prisma.jobApplication.findFirst({ where: { id: req.params.id, userId: req.user!.id } }); if (!existing) return res.status(404).json({ error: "Application not found." }); await prisma.jobApplication.delete({ where: { id: existing.id } }); res.status(204).send(); });
 
 app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: AuthenticatedRequest, res) => {
  try {
