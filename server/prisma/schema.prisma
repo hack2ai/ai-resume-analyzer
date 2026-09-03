@@ -22,7 +22,9 @@ model ResumeAnalysis {
   id                String   @id @default(cuid())
   userId            String
   resumeFileName    String
+  resumeText        String   @default("") @db.Text
   jobTitle          String?
+  jobDescription    String   @default("") @db.Text
   atsScore          Int
   matchPercentage   Int
   summary           String
