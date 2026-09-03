@@ -18,7 +18,16 @@ const app = express();
 const port = Number(process.env.PORT || 3001);
 const maxFileSize = Number(process.env.MAX_FILE_SIZE_MB || 10) * 1024 * 1024;
 const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((origin) => origin.trim()).filter(Boolean);
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
+// Google AI Studio / Gemini is used through Google's OpenAI-compatible endpoint.
+// This lets the existing OpenAI TypeScript SDK stay in place while using a Gemini API key.
+const gemini = process.env.GEMINI_API_KEY
+  ? new OpenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai/",
+      defaultHeaders: { "x-goog-api-client": "resumeiq-ai/2.0" }
+    })
+  : null;
 
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
@@ -61,14 +70,14 @@ app.post("/api/analyze", requireAuth, upload.single("resume"), async (req: Authe
     if (!req.body.jobDescription || typeof req.body.jobDescription !== "string" || req.body.jobDescription.trim().length < 30) {
       return res.status(400).json({ error: "Please provide a meaningful job description." });
     }
-    if (!openai) return res.status(503).json({ error: "AI analysis is not configured. Add OPENAI_API_KEY on the server." });
+    if (!gemini) return res.status(503).json({ error: "AI analysis is not configured. Add GEMINI_API_KEY on the server." });
 
     const parsed = await pdf(req.file.buffer);
     const resumeText = parsed.text.replace(/\s+/g, " ").trim();
     if (resumeText.length < 100) return res.status(400).json({ error: "The PDF does not contain enough readable resume text." });
 
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-5-mini",
+    const response = await gemini.chat.completions.create({
+      model: process.env.GEMINI_MODEL || "gemini-3.7-flash",
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: "You are a precise resume and ATS analyst. Return only valid JSON with atsScore, matchPercentage, missingKeywords, strengths, improvements, and summary. Scores are estimates, not hiring decisions. Be practical and do not invent experience." },
