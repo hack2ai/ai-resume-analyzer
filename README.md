@@ -9,6 +9,23 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/AI-Google%20Gemini-4285F4?style=for-the-badge" alt="Google Gemini" />
+  <img src="https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/Language-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Backend-Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/API-Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/ORM-Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/hack2ai/ai-resume-analyzer/ci.yml?branch=main&style=flat-square&label=CI" alt="CI status" />
+  <img src="https://img.shields.io/github/repo-size/hack2ai/ai-resume-analyzer?style=flat-square" alt="Repository size" />
+  <img src="https://img.shields.io/github/last-commit/hack2ai/ai-resume-analyzer?style=flat-square" alt="Last commit" />
+  <img src="https://img.shields.io/github/license/hack2ai/ai-resume-analyzer?style=flat-square" alt="MIT License" />
+</p>
+
+<p align="center">
   <a href="https://github.com/hack2ai/ai-resume-analyzer/actions">CI</a> ·
   <a href="https://github.com/hack2ai/ai-resume-analyzer">GitHub Repository</a> ·
   <a href="https://github.com/hack2ai">GitHub Profile</a>
