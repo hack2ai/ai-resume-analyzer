@@ -1,118 +1,144 @@
 # ResumeIQ AI
 
-> A full-stack AI career intelligence platform that analyzes resumes against job descriptions, estimates ATS compatibility, identifies skill gaps, rewrites resume content, generates tailored cover letters, prepares candidates for interviews, and tracks job applications.
+<p align="center">
+  <strong>AI-powered career intelligence for smarter job applications.</strong>
+</p>
 
-## Why ResumeIQ AI?
+<p align="center">
+  Analyze resumes, optimize content, prepare for interviews, generate application materials, and track applications from one workspace.
+</p>
 
-ResumeIQ AI turns a resume and a target job description into a practical career-improvement workspace. It combines AI analysis with deterministic career tools so users can understand their current fit, improve their resume, prepare for interviews, generate application materials, and track applications in one place.
+<p align="center">
+  <a href="https://github.com/hack2ai/ai-resume-analyzer/actions">CI</a> ·
+  <a href="https://github.com/hack2ai/ai-resume-analyzer">Repository</a> ·
+  <a href="https://github.com/hack2ai">Author</a>
+</p>
 
-> **Important:** ATS, match, readiness, and other AI-assisted scores are estimates for guidance. They are not hiring decisions, interview guarantees, or assessments of a person's worth.
+---
 
-## Features
+## Overview
 
-### Resume intelligence
+**ResumeIQ AI** is a full-stack career intelligence platform built around a simple workflow: upload a resume, provide a target job description, and turn the analysis into concrete next steps.
 
-- PDF resume upload with file-type and size validation
-- PDF text extraction
-- AI-powered ATS-style analysis
-- Resume-to-job match scoring
-- Missing keyword detection
-- Strengths and priority improvements
-- Skill Gap Analyzer with keyword coverage
-- Score Progress across saved analyses
-- Resume Version Comparison
-- Career Readiness Score
-- Resume Improvement Roadmap
-- Analysis History with search, sorting, and score filtering
+The platform combines **Google Gemini**, **React**, **Express**, **Prisma**, and **PostgreSQL** to provide resume analysis, ATS-style scoring, skill-gap detection, AI rewriting, cover-letter generation, interview preparation, and job-application tracking.
 
-### AI writing tools
+> **Note:** ATS, job-match, readiness, and related scores are estimates for guidance only. They are not hiring decisions, interview guarantees, or guarantees of employment.
 
-- AI Resume Rewriter with before/after comparison
-- Section-focused rewriting for summary, experience, skills, projects, education, or custom content
-- Tailored AI Cover Letter Generator
-- Cover Letter History
-- Copy generated content for applications
+## Key Capabilities
 
-### Interview preparation
+| Area | Capabilities |
+|---|---|
+| Resume analysis | PDF parsing, ATS-style scoring, job matching, strengths, improvements |
+| Skill intelligence | Missing keywords, matched terms, keyword coverage, skill gaps |
+| Career insights | Career readiness score, improvement roadmap, action plan |
+| Resume optimization | AI section rewriting with before/after comparison |
+| Cover letters | Tailored Gemini-generated cover letters with history |
+| Interview prep | Role-based questions, gap-focused questions, mock interview practice |
+| Application tracking | Applied, Interview, Offer, Rejected workflow with search/filtering |
+| Progress tracking | Analysis history, score progress, resume version comparison |
+| Reports | Downloadable PDF analysis reports |
+| Security | JWT auth, bcryptjs, Helmet, CORS allow-list, rate limiting, Zod validation |
 
-- Role-focused Interview Preparation
-- Behavioral, technical, resume-based, and gap-focused questions
-- AI Mock Interview practice with structured feedback
-- Practice scoring across clarity, relevance, and structure
+## Product Workflow
 
-### Application management
-
-- Job Application Tracker
-- Applied / Interview / Offer / Rejected status workflow
-- Search and filtering
-- Status updates and deletion
-- PostgreSQL-backed persistence for logged-in users
-
-### Security and reliability
-
-- JWT authentication
-- Password hashing with bcryptjs
-- Helmet security headers
-- CORS allow-list configuration
-- API rate limiting
-- Zod request validation
-- Protected user-specific routes and database queries
-- PDF upload validation and size limits
-- Health endpoint for service monitoring
-- Production environment validation
-- GitHub Actions CI checks
+```text
+Upload Resume + Job Description
+              │
+              ▼
+        Gemini Analysis
+              │
+     ┌────────┼─────────┐
+     ▼        ▼         ▼
+   ATS     Job Match   Skill Gaps
+     │        │         │
+     └────────┼─────────┘
+              ▼
+      Career Readiness
+              │
+     ┌────────┼───────────┐
+     ▼        ▼           ▼
+  Rewrite  Cover Letter  Interview Prep
+     │        │           │
+     └────────┼───────────┘
+              ▼
+      Job Application Tracker
+```
 
 ## Architecture
 
 ```text
-                    ┌──────────────────────────┐
-                    │      React + Vite UI      │
-                    │  ResumeIQ Career Workspace│
-                    └─────────────┬────────────┘
-                                  │ REST / HTTPS
-                    ┌─────────────▼────────────┐
-                    │ Node.js + Express + TS   │
-                    ├──────────┬───────┬───────┤
-                    │          │       │       │
-              Authentication  Gemini  PDF    Reports
-                    │          │       │       │
-                    └──────────┴───────┴───────┘
-                                  │
-                    ┌─────────────▼────────────┐
-                    │ Prisma + PostgreSQL      │
-                    │ users / analyses /       │
-                    │ rewrites / cover letters│
-                    │ / applications           │
-                    └──────────────────────────┘
+┌──────────────────────────────┐
+│       React + Vite UI        │
+│      ResumeIQ workspace      │
+└──────────────┬───────────────┘
+               │ REST / HTTPS
+               ▼
+┌──────────────────────────────┐
+│   Node.js + Express + TS     │
+│                              │
+│ Auth │ Analysis │ Writing    │
+│      │ Reports  │ Tracking   │
+└──────┬───────────────┬───────┘
+       │               │
+       ▼               ▼
+┌───────────────┐  ┌────────────────┐
+│ Prisma +      │  │ Google Gemini  │
+│ PostgreSQL    │  │ AI generation  │
+└───────────────┘  └────────────────┘
 ```
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19, Vite, TypeScript |
-| Backend | Node.js, Express, TypeScript |
-| Database | PostgreSQL, Prisma |
-| AI | Google Gemini via OpenAI-compatible API |
-| PDF parsing | pdf-parse |
-| PDF reports | PDFKit |
-| Validation | Zod |
-| Authentication | JWT, bcryptjs |
-| Security | Helmet, CORS, express-rate-limit |
-| CI | GitHub Actions |
+### Frontend
+
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- Lucide React
+- React Hook Form
+- Framer Motion
+
+### Backend
+
+- Node.js
+- Express 5
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- Zod
+- JWT
+- bcryptjs
+- Helmet
+- express-rate-limit
+- Multer
+
+### AI & Documents
+
+- Google Gemini via its OpenAI-compatible API
+- `pdf-parse` for resume text extraction
+- PDFKit for generated reports
+
+### Engineering
+
+- GitHub Actions CI
+- TypeScript type checking
+- Production builds
+- Dependency auditing
 
 ## Project Structure
 
 ```text
 ai-resume-analyzer/
+│
 ├── src/
 │   ├── ResumeAnalyzer.tsx
 │   ├── ResumeInsightsSuite.tsx
 │   ├── ResumeRewriter.tsx
 │   ├── CoverLetterGenerator.tsx
 │   ├── JobApplicationTracker.tsx
-│   ├── AIMockInterview.tsx
 │   ├── InterviewPreparation.tsx
+│   ├── AIMockInterview.tsx
 │   ├── SkillGapAnalyzer.tsx
 │   ├── CareerReadinessScore.tsx
 │   ├── ResumeActionPlan.tsx
@@ -120,6 +146,7 @@ ai-resume-analyzer/
 │   ├── ScoreProgress.tsx
 │   ├── AnalysisHistory.tsx
 │   └── hooks/
+│
 ├── server/
 │   ├── prisma/
 │   │   ├── schema.prisma
@@ -131,18 +158,21 @@ ai-resume-analyzer/
 │   │   └── routes/
 │   ├── package.json
 │   └── .env.example
+│
 ├── .github/
 │   └── workflows/
+│
+├── package.json
 └── README.md
 ```
 
-## Local Setup
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
 - PostgreSQL 15+
-- Google AI Studio Gemini API key
+- A Google AI Studio Gemini API key
 
 ### 1. Clone the repository
 
@@ -164,24 +194,36 @@ cd server
 npm install
 ```
 
-### 4. Configure PostgreSQL
+### 4. Create the PostgreSQL database
 
-Create a PostgreSQL database named `resumeiq`.
-
-For the local development environment used by the project:
+Create a database named:
 
 ```text
-host: localhost
-port: 5433
-user: postgres
-database: resumeiq
+resumeiq
 ```
 
-Use your own password and never commit it.
+The local development configuration used for this project is:
 
-### 5. Configure backend environment variables
+```text
+Host: localhost
+Port: 5433
+Database: resumeiq
+User: postgres
+```
 
-Create `server/.env` from `server/.env.example` and set values similar to:
+Use your own PostgreSQL password.
+
+### 5. Configure environment variables
+
+Create:
+
+```text
+server/.env
+```
+
+Use `server/.env.example` as the template.
+
+Example:
 
 ```env
 NODE_ENV=development
@@ -196,23 +238,26 @@ JWT_SECRET=YOUR_LONG_RANDOM_SECRET
 JWT_EXPIRES_IN=7d
 ```
 
-Never commit `server/.env`, API keys, passwords, or JWT secrets.
+**Never commit `.env`, passwords, JWT secrets, or API keys.**
 
-### 6. Create/update database tables
+### 6. Initialize Prisma
+
+From `server/`:
 
 ```bash
-cd server
 npx prisma generate
 npx prisma migrate dev
 ```
 
 ### 7. Start the backend
 
+From `server/`:
+
 ```bash
 npm run dev
 ```
 
-The backend runs on:
+Backend:
 
 ```text
 http://localhost:3001
@@ -232,29 +277,28 @@ Expected response:
 
 ### 8. Start the frontend
 
-Open a second terminal:
+Open a second terminal in the project root:
 
 ```bash
-cd ai-resume-analyzer
 npm run dev
 ```
 
-The frontend runs on:
+Frontend:
 
 ```text
 http://localhost:5173
 ```
 
-## Development Checks
+## Development & Quality Checks
 
-Frontend:
+### Frontend
 
 ```bash
 npm run typecheck
 npm run build
 ```
 
-Backend:
+### Backend
 
 ```bash
 cd server
@@ -264,79 +308,92 @@ npm run build
 npm audit
 ```
 
-The project uses GitHub Actions to run automated quality checks for repository changes.
+The repository also contains GitHub Actions workflows that validate frontend and backend quality on repository changes.
 
-## API Overview
+## API Reference
 
 ### Authentication
 
-| Endpoint | Purpose |
-|---|---|
-| `POST /api/auth/register` | Create account |
-| `POST /api/auth/login` | Sign in |
-| `GET /api/auth/me` | Current user |
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Create an account |
+| POST | `/api/auth/login` | Authenticate a user |
+| GET | `/api/auth/me` | Return the current user |
 
-### Resume analysis
+### Resume & career intelligence
 
-| Endpoint | Purpose |
-|---|---|
-| `POST /api/analyze` | Analyze uploaded resume against a job description |
-| `GET /api/dashboard` | Load saved analyses |
-| `POST /api/rewrite` | Rewrite a resume section with AI |
-| `GET /api/rewrite/history` | Load rewrite history |
-| `GET /api/reports/:analysisId.pdf` | Download a saved analysis report |
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/analyze` | Analyze a PDF resume against a job description |
+| GET | `/api/dashboard` | Load saved resume analyses |
+| POST | `/api/rewrite` | Rewrite a resume section with AI |
+| GET | `/api/rewrite/history` | Load saved rewrites |
+| GET | `/api/reports/:analysisId.pdf` | Download a PDF analysis report |
 
 ### Cover letters
 
-| Endpoint | Purpose |
-|---|---|
-| `POST /api/cover-letter` | Generate a tailored cover letter |
-| `GET /api/cover-letter/history` | Load saved cover letters |
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/cover-letter` | Generate a tailored cover letter |
+| GET | `/api/cover-letter/history` | Load saved cover letters |
 
 ### Job applications
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/applications` | List the authenticated user's applications |
-| `POST /api/applications` | Create an application |
-| `PATCH /api/applications/:id` | Update an application |
-| `DELETE /api/applications/:id` | Delete an application |
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/applications` | List applications for the authenticated user |
+| POST | `/api/applications` | Create an application |
+| PATCH | `/api/applications/:id` | Update an application |
+| DELETE | `/api/applications/:id` | Delete an application |
 
 ### Monitoring
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /health` | API health check |
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Check API availability |
+
+## Security
+
+ResumeIQ applies several server-side controls:
+
+- JWT-based authentication
+- Password hashing with bcryptjs
+- User-scoped database queries
+- Helmet security headers
+- CORS origin allow-list
+- Request rate limiting
+- Zod request validation
+- PDF file-type and size validation
+- Production environment-variable validation
+- Server-side AI credentials
+- No secrets committed to the repository
+
+For production, use HTTPS, a managed PostgreSQL database, strong randomly generated secrets, and platform secret management.
 
 ## Production Deployment
 
 Recommended architecture:
 
 ```text
-Vercel / Netlify
-      │
-      │ HTTPS
-      ▼
-React + Vite frontend
-      │
-      │ HTTPS / REST
-      ▼
-Render / Railway
-      │
-      ├── Express API
-      └── Prisma
-             │
-             ▼
-      Managed PostgreSQL
+             HTTPS
+Frontend ───────────────► Backend
+Vercel                   Railway / Render
+                            │
+                            ├── Express
+                            ├── Prisma
+                            └── Gemini
+                                  │
+                                  ▼
+                           Managed PostgreSQL
 ```
 
-### Production frontend variables
+### Frontend environment
 
 ```env
 VITE_API_URL=https://your-api-domain.example
 ```
 
-### Production backend variables
+### Backend environment
 
 ```env
 NODE_ENV=production
@@ -347,35 +404,36 @@ GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 GEMINI_MODEL=gemini-3.7-flash
 CLIENT_ORIGIN=https://your-frontend-domain.example
 MAX_FILE_SIZE_MB=10
-JWT_SECRET=long_random_production_secret
+JWT_SECRET=your_long_random_production_secret
 JWT_EXPIRES_IN=7d
 ```
 
-For production, use a managed PostgreSQL provider and HTTPS everywhere.
+> Production deployment is intentionally documented here but not included as part of the repository's local development setup.
 
-## Security Notes
+## Project Status
 
-- Keep all API keys and database credentials on the server.
-- Never expose `GEMINI_API_KEY` through frontend code.
-- Use a long random production `JWT_SECRET`.
-- Configure `CLIENT_ORIGIN` to the exact production frontend origin.
-- Use HTTPS in production.
-- Keep Helmet and rate limiting enabled.
-- Validate all request payloads.
-- Validate uploaded PDFs and enforce a size limit.
-- Scope database queries to the authenticated user.
-- Rotate credentials that are accidentally exposed.
-- Review the AI provider's privacy and data-retention terms before processing sensitive resumes.
+**Core application:** Complete  
+**Local development:** Validated  
+**Frontend typecheck/build:** Passing  
+**Backend typecheck/build:** Passing  
+**Dependency audit:** 0 vulnerabilities in the validated local environment  
+**Production deployment:** Planned separately
 
-## Current Project Status
+## Future Enhancements
 
-ResumeIQ AI has its core product workflow implemented and locally validated, including frontend and backend type checking/builds, PostgreSQL migrations, Gemini-powered analysis, AI writing tools, interview tools, application tracking, and dependency auditing.
+Potential next-stage improvements include:
 
-Production deployment, external end-to-end monitoring, and any organization-specific compliance requirements should be completed before treating the system as a public production service.
+- Streaming analysis progress
+- Email notifications
+- Advanced explainable scoring
+- Admin observability
+- Automated production deployment
+- Organization-specific compliance controls
 
 ## Author
 
-**Pankaj (Tony) Kumar**  
+**Pankaj Kumar (Tony)**
+
 AI Engineer · Full Stack Developer · Generative AI & RAG Specialist
 
 - GitHub: https://github.com/hack2ai
@@ -383,4 +441,4 @@ AI Engineer · Full Stack Developer · Generative AI & RAG Specialist
 
 ## License
 
-MIT
+This project is licensed under the **MIT License**.
