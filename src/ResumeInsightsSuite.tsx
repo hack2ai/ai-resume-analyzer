@@ -5,6 +5,7 @@ import CareerRecommendations from "./CareerRecommendations";
 import ImprovementRoadmap from "./ImprovementRoadmap";
 import SkillGapAnalyzer from "./SkillGapAnalyzer";
 import CareerReadinessScore from "./CareerReadinessScore";
+import ResumeActionPlan from "./ResumeActionPlan";
 
 type Analysis={id?:string;analysisId?:string;atsScore:number;matchPercentage:number;missingKeywords:string[];strengths:string[];improvements:string[];summary:string;resumeFileName?:string;resumeText?:string;jobDescription?:string;jobTitle?:string|null;createdAt?:string};
 type Props={analyses:Analysis[];currentAnalysis?:Analysis|null;jobDescription:string;resumeText?:string;dark?:boolean;onView:(analysis:any)=>void;onDownload:(analysis:any)=>void};
@@ -25,6 +26,7 @@ export default function ResumeInsightsSuite({analyses,currentAnalysis,jobDescrip
  return <section style={{marginTop:30,display:"grid",gap:22}}>
   <ScoreProgress analyses={analyses} dark={dark}/>
   <CareerReadinessScore analysis={analysis} dark={dark}/>
+  <ResumeActionPlan analysis={analysis} dark={dark}/>
   <AnalysisDetails analysis={analysis} dark={dark}/>
   <CareerRecommendations analysis={analysis} dark={dark}/>
   <ImprovementRoadmap analysis={analysis} dark={dark}/>
